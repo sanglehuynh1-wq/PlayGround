@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#071014">
+  <title>THỦY CUNG — Aquarium Room</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23071014'/%3E%3Cpath d='M7 16l7-6v12z' fill='%23b58b4a'/%3E%3Cellipse cx='19' cy='16' rx='8' ry='5.5' fill='%23e7c577'/%3E%3Ccircle cx='22' cy='14.6' r='1.8' fill='%23071014'/%3E%3Crect x='13' y='16' width='9' height='1.4' fill='%238a6528'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="game-shell" id="gameShell">
+    <canvas id="scene" aria-label="Aquarium room. Tap a tank to manage it."></canvas>
+    <div class="vignette" aria-hidden="true"></div>
+    <div class="grain" aria-hidden="true"></div>
+
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 34 24" shape-rendering="crispEdges">
+            <rect x="2" y="8" width="4" height="8" fill="#e7c577"/>
+            <rect x="5" y="6" width="5" height="12" fill="#c5a351"/>
+            <rect x="9" y="8" width="12" height="8" fill="#e7c577"/>
+            <rect x="11" y="5" width="5" height="4" fill="#c5a351"/>
+            <rect x="20" y="6" width="7" height="12" fill="#c5a351"/>
+            <rect x="27" y="9" width="4" height="6" fill="#e7c577"/>
+            <rect x="25" y="9" width="2" height="2" fill="#071014"/>
+            <rect x="13" y="10" width="6" height="2" fill="#8c6a2e"/>
+            <rect x="12" y="14" width="8" height="1" fill="#f7e8bd"/>
+          </svg>
+        </span>
+        <div class="brand-text">
+          <h1>THỦY CUNG</h1>
+          <span>AQUARIUM ROOM <i>·</i> 56-COLOR EDITION</span>
+        </div>
+      </div>
+      <div class="day-chip" title="Game time">
+        <span class="day-label">NGÀY</span>
+        <strong id="dayValue">1</strong>
+        <span class="day-div"></span>
+        <span class="clock" id="clockValue">09:10</span>
+      </div>
+      <div class="top-actions">
+        <button class="icon-btn" id="soundBtn" aria-label="Toggle sound" title="Sound">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path class="wave" d="M16 8c2 2 2 6 0 8M18.5 5.5c3.2 3.2 3.2 9.8 0 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+        <button class="icon-btn" id="helpBtn" aria-label="Help and controls" title="Help">?</button>
+        <div class="wallet" id="wallet">
+          <span class="wallet-label">BANK · VNĐ</span>
+          <strong id="moneyValue">2.400.000</strong>
+          <em>VNĐ</em>
+          <span class="wallet-coin" aria-hidden="true"></span>
+        </div>
+      </div>
+    </header>
+
+    <div class="hint" id="hint" role="status">
+      <span class="hint-dot"></span>
+      <span id="hintText">Tap a tank to inspect, feed and clean.</span>
+    </div>
+
+    <aside class="food-rail" id="foodRail" aria-label="Food menu">
+      <div class="rail-head"><span>FOOD</span><i></i></div>
+      <div class="rail-items" id="foodItems"></div>
+      <div class="rail-foot">
+        <span>FEED</span>
+        <b id="railHint">OPEN A TANK</b>
+      </div>
+    </aside>
+
+    <div class="toast-stack" id="toasts" aria-live="polite"></div>
+
+    <section class="tray" id="tray" aria-label="Holding tray">
+      <div class="tray-head">
+        <div>
+          <span class="eyebrow">TEMPORARY STORAGE</span>
+          <strong>HOLDING TRAY</strong>
+        </div>
+        <b id="trayCount">0 / 10</b>
+      </div>
+      <div class="tray-items" id="trayItems"></div>
+      <div class="tray-actions">
+        <button class="shop-button" id="shopBtn">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h16l-1.5 12h-13z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 9V6a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+          <span><b>SHOP</b><small>FISH · FOOD · DECOR</small></span>
+        </button>
+      </div>
+    </section>
+
+    <div class="drag-ghost" id="dragGhost" hidden></div>
+
+    <!-- SHOP ----------------------------------------------------------------->
+    <div class="modal" id="shopModal" hidden>
+      <div class="modal-scrim" data-close="shop"></div>
+      <div class="shop-card panel" role="dialog" aria-modal="true" aria-labelledby="shopTitle">
+        <header class="modal-head">
+          <div>
+            <span class="eyebrow">THỦY CUNG SUPPLY CO.</span>
+            <h2 id="shopTitle">THE SHOP</h2>
+          </div>
+          <div class="shop-wallet">
+            <span>YOUR BANK</span>
+            <strong id="shopMoney">2.400.000</strong><em>VNĐ</em>
+          </div>
+          <button class="icon-btn close-btn" data-close="shop" aria-label="Close shop">✕</button>
+        </header>
+        <nav class="shop-tabs" id="shopTabs" aria-label="Shop categories">
+          <button data-tab="fish" class="active">FISH</button>
+          <button data-tab="food">FOOD</button>
+          <button data-tab="decor">DECOR</button>
+        </nav>
+        <div class="shop-toolbar" id="shopToolbar">
+          <div class="filter-pills" id="fishFilters">
+            <button data-filter="all" class="active">ALL</button>
+            <button data-filter="predator">PREDATORS</button>
+            <button data-filter="small">NANO</button>
+          </div>
+          <p id="shopNote">Live prey eaters and nano tanks — pick the right fish for the right rack.</p>
+        </div>
+        <div class="shop-grid" id="shopGrid"></div>
+      </div>
+    </div>
+
+    <!-- TANK DETAIL ---------------------------------------------------------->
+    <div class="modal detail-modal" id="detailModal" hidden>
+      <div class="modal-scrim" data-close="detail"></div>
+      <div class="detail-card panel" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+        <div class="detail-stage" id="detailStage">
+          <canvas id="detailCanvas" aria-label="Close-up of the selected aquarium."></canvas>
+          <div class="stage-head">
+            <div>
+              <span class="eyebrow" id="stageCode">P-01 · 200 CM</span>
+              <h2 id="detailTitle">AMAZON</h2>
+            </div>
+            <div class="stage-chips">
+              <span id="stageTemp">27.4°C</span>
+              <span id="stageCap">2 / 4</span>
+              <span id="stageFilter">FILTER ON</span>
+            </div>
+          </div>
+          <div class="stage-hud clean-hud" id="cleanHud" hidden>
+            <div class="hud-copy">
+              <b>SCRUB THE GLASS</b>
+              <span>Drag across the algae until the water is clear.</span>
+            </div>
+            <div class="hud-progress"><i id="cleanBar"></i><span id="cleanPct">0%</span></div>
+            <button class="ghost-btn" id="cleanDone">DONE</button>
+          </div>
+          <div class="stage-hud inspect-hud" id="inspectHud" hidden>
+            <div class="inspect-grid">
+              <span>TEMP <b id="inspectTemp">27.4°C</b></span>
+              <span>pH <b id="inspectPh">6.8</b></span>
+              <span>O₂ <b id="inspectO2">93%</b></span>
+              <span>CLARITY <b id="inspectClarity">88%</b></span>
+            </div>
+            <small>Move the lens across the water. 2.15× magnification.</small>
+          </div>
+          <div class="stage-hud decor-hud" id="decorHud" hidden>
+            <div class="hud-copy">
+              <b id="decorHudTitle">PLACE DECORATION</b>
+              <span id="decorHudText">Drag anywhere on the substrate, then confirm.</span>
+            </div>
+            <div class="hud-buttons">
+              <button class="ghost-btn" id="decorCancel">CANCEL</button>
+              <button class="primary-btn" id="decorConfirm" disabled>CONFIRM PLACEMENT</button>
+            </div>
+          </div>
+        </div>
+        <aside class="detail-side">
+          <header class="side-head">
+            <span class="eyebrow">TANK MANAGEMENT</span>
+            <button class="icon-btn close-btn" data-close="detail" aria-label="Close tank view">✕</button>
+          </header>
+          <div id="detailSideBody" class="side-scroll"></div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- HELP ----------------------------------------------------------------->
+    <div class="modal" id="helpModal" hidden>
+      <div class="modal-scrim" data-close="help"></div>
+      <div class="help-card panel" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+        <header class="modal-head">
+          <div>
+            <span class="eyebrow">KEEPER'S HANDBOOK</span>
+            <h2 id="helpTitle">HOW TO RUN THE ROOM</h2>
+          </div>
+          <button class="icon-btn close-btn" data-close="help" aria-label="Close help">✕</button>
+        </header>
+        <div class="help-body">
+          <section>
+            <h3>1 · STOCK THE ROOM</h3>
+            <p>Buy fish and decorations from the <b>SHOP</b>. Everything lands in the <b>holding tray</b>. Tap a tray item, then tap a tank to place it — or drag a decor piece straight onto a tank.</p>
+          </section>
+          <section>
+            <h3>2 · FEED THE RIGHT MOUTH</h3>
+            <p><b>Predators</b> (200 cm rack) refuse pellets. They eat live prey, bloodworms and fresh shrimp. <b>Nano fish</b> (50 cm rack) eat pellets, bloodworms and shrimp. Food has limited uses; restock before it runs out.</p>
+          </section>
+          <section>
+            <h3>3 · COLLECT THE MONEY</h3>
+            <p>Comfortable adult fish tip paper money into their tank. Click the glowing banknotes to bank them. Fullness, clean water, oxygen and a beautiful aquascape all increase tips.</p>
+          </section>
+          <section>
+            <h3>4 · CLEAN & INSPECT</h3>
+            <p>Open a tank and choose <b>CLEAN</b> to scrub algae from the glass. <b>INSPECT</b> raises a 2.15× water lens with live chemistry read-outs.</p>
+          </section>
+          <section>
+            <h3>5 · BREED A PAIR</h3>
+            <p>Select one adult male and one adult female of the same species. Both must be well fed, the water clean and the pair rested. Eggs hatch into fry, then grow to adults.</p>
+          </section>
+          <section class="help-note">
+            <h3>CONTROLS</h3>
+            <p><b>Tap</b> a tank to manage · <b>Esc</b> closes panels · Sound can be muted top-right. The room saves automatically. A 56-colour pixel palette is rendered crisply to 4K displays.</p>
+          </section>
+        </div>
+        <footer class="help-foot">
+          <button class="ghost-btn" id="newGameBtn">START A NEW AQUARIUM</button>
+          <span>THỦY CUNG · aquarium management sim</span>
+        </footer>
+      </div>
+    </div>
+
+    <div class="float-layer" id="floatLayer" aria-hidden="true"></div>
+  </div>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
